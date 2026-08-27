@@ -1,991 +1,3679 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caça à Palavra - IA</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary-color: #6366f1;
-            --secondary-color: #ec4899;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --dark-bg: #0f172a;
-            --light-bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-color: #e2e8f0;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Header */
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-            animation: slideDown 0.6s ease-out;
-        }
-
-        header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            font-weight: 800;
-        }
-
-        header .subtitle {
-            font-size: 1.2em;
-            opacity: 0.95;
-        }
-
-        /* Main Game Wrapper */
-        .game-wrapper {
-            display: grid;
-            grid-template-columns: 250px 1fr 280px;
-            gap: 20px;
-            margin-bottom: 30px;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @media (max-width: 1024px) {
-            .game-wrapper {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-        }
-
-        /* Panels */
-        .left-panel,
-        .right-panel,
-        .game-section {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .game-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Info Sections */
-        .info-section,
-        .stats-section,
-        .definition-section,
-        .tips-section {
-            margin-bottom: 20px;
-        }
-
-        .info-section h2,
-        .definition-section h2 {
-            font-size: 1.3em;
-            margin-bottom: 15px;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .stats-section h3,
-        .tips-section h3 {
-            font-size: 1.1em;
-            margin-bottom: 12px;
-            color: var(--primary-color);
-        }
-
-        /* Words List */
-        .words-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .word-item {
-            padding: 10px 12px;
-            background: var(--light-bg);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 4px solid var(--primary-color);
-            user-select: none;
-        }
-
-        .word-item:hover {
-            background: var(--border-color);
-            transform: translateX(5px);
-        }
-
-        .word-item.found {
-            background: var(--success-color);
-            color: white;
-            border-left-color: var(--success-color);
-            text-decoration: line-through;
-            opacity: 0.7;
-        }
-
-        .word-item-text {
-            font-weight: 600;
-            font-size: 0.95em;
-        }
-
-        .word-item-hint {
-            font-size: 0.8em;
-            opacity: 0.7;
-            margin-top: 4px;
-        }
-
-        /* Progress Bar */
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 10px;
-        }
-
-        #progressText {
-            font-size: 0.95em;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-align: center;
-        }
-
-        /* Buttons */
-        .reset-btn,
-        .control-btn {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .reset-btn {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-        }
-
-        .reset-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .reset-btn:active {
-            transform: translateY(0);
-        }
-
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .control-btn {
-            background: var(--light-bg);
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-
-        .control-btn:hover {
-            background: var(--primary-color);
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .control-btn:active {
-            transform: scale(0.98);
-        }
-
-        /* Game Board */
-        .game-board {
-            display: inline-grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 4px;
-            padding: 20px;
-            background: linear-gradient(135deg, #f0f4f8 0%, #e8f0f8 100%);
-            border-radius: 12px;
-            place-self: center;
-            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .letter-cell {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: white;
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.95em;
-            user-select: none;
-            transition: all 0.2s ease;
-            color: var(--text-primary);
-        }
-
-        .letter-cell:hover {
-            background: #fff9e6;
-            border-color: var(--warning-color);
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
-        }
-
-        .letter-cell.selected {
-            background: var(--warning-color);
-            color: white;
-            border-color: var(--warning-color);
-            transform: scale(1.15);
-        }
-
-        .letter-cell.found {
-            background: var(--success-color);
-            color: white;
-            border-color: var(--success-color);
-            font-weight: 800;
-        }
-
-        .letter-cell.hint {
-            background: #dbeafe;
-            border-color: var(--primary-color);
-            animation: pulse 0.6s ease-in-out;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
-            }
-            50% {
-                box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
-            }
-        }
-
-        /* Definition Box */
-        .definition-box {
-            background: linear-gradient(135deg, #f0f4f8 0%, #e8f0f8 100%);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-color);
-            min-height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.95em;
-            line-height: 1.6;
-        }
-
-        .definition-title {
-            font-weight: 700;
-            color: var(--primary-color);
-            font-size: 1.1em;
-            margin-bottom: 10px;
-        }
-
-        .definition-text {
-            color: var(--text-primary);
-            margin-bottom: 10px;
-        }
-
-        .definition-extra {
-            font-size: 0.85em;
-            color: var(--text-secondary);
-            font-style: italic;
-            margin-top: 10px;
-        }
-
-        /* Tips Section */
-        .tips-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .tips-list li {
-            padding: 10px;
-            background: var(--light-bg);
-            border-radius: 6px;
-            border-left: 3px solid var(--warning-color);
-            font-size: 0.9em;
-            line-height: 1.4;
-            color: var(--text-primary);
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            color: white;
-            font-size: 1.1em;
-            padding-top: 20px;
-            border-top: 2px solid rgba(255, 255, 255, 0.2);
-            margin-top: 30px;
-            animation: fadeIn 1s ease-out;
-        }
-
-        /* Animations */
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            header h1 {
-                font-size: 2em;
-            }
-
-            .game-board {
-                grid-template-columns: repeat(8, 1fr);
-                gap: 3px;
-                padding: 15px;
-            }
-
-            .letter-cell {
-                width: 35px;
-                height: 35px;
-                font-size: 0.85em;
-            }
-
-            .game-wrapper {
-                grid-template-columns: 1fr;
-            }
-
-            .left-panel,
-            .right-panel {
-                order: 2;
-            }
-
-            .game-section {
-                order: 1;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-
-            header h1 {
-                font-size: 1.5em;
-            }
-
-            header .subtitle {
-                font-size: 1em;
-            }
-
-            .game-board {
-                grid-template-columns: repeat(6, 1fr);
-            }
-
-            .letter-cell {
-                width: 30px;
-                height: 30px;
-                font-size: 0.75em;
-            }
-
-            .left-panel,
-            .right-panel {
-                padding: 15px;
-            }
-        }
-
-        /* Success Animation */
-        @keyframes popOut {
-            0% {
-                transform: scale(0.8);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .word-item.found {
-            animation: popOut 0.4s ease-out;
-        }
-
-        /* Completion Modal */
-        .completion-message {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            animation: slideDown 0.4s ease-out;
-        }
-
-        .completion-message h2 {
-            color: var(--success-color);
-            font-size: 2em;
-            margin-bottom: 15px;
-        }
-
-        .completion-message p {
-            color: var(--text-secondary);
-            font-size: 1.1em;
-            margin-bottom: 20px;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-    </style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ARQUIVO ZERO // Investigação</title>
+
+<style>
+
+/* =====================================================
+RESET
+===================================================== */
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+:root{
+    --bg:#080a0c;
+    --bg2:#101417;
+    --panel:#111619;
+    --panel2:#171c20;
+
+    --green:#39ff88;
+    --green-dark:#0c6b39;
+
+    --yellow:#ffc928;
+    --red:#ff4545;
+    --blue:#35a9ff;
+
+    --text:#e5e7eb;
+    --muted:#8d979d;
+    --line:#283136;
+}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(
+            circle at 50% -20%,
+            #173323 0%,
+            #0b0e10 42%,
+            #050607 100%
+        );
+
+    color:var(--text);
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    overflow-x:hidden;
+}
+
+/* =====================================================
+SCANLINES
+===================================================== */
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    pointer-events:none;
+
+    opacity:.08;
+
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 3px,
+            #fff 4px
+        );
+
+    z-index:999;
+}
+
+/* =====================================================
+LAYOUT
+===================================================== */
+
+.container{
+
+    width:min(1250px,94%);
+
+    margin:auto;
+
+    padding:25px 0 80px;
+}
+
+/* =====================================================
+TOPO
+===================================================== */
+
+.topbar{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:20px;
+
+    background:#0d1113;
+
+    border:1px solid var(--line);
+
+    padding:14px 20px;
+
+    margin-bottom:20px;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.45);
+
+    position:sticky;
+
+    top:10px;
+
+    z-index:50;
+}
+
+.brand{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    font-family:monospace;
+
+    font-weight:bold;
+
+    letter-spacing:2px;
+}
+
+.brand-icon{
+
+    width:35px;
+
+    height:35px;
+
+    display:grid;
+
+    place-items:center;
+
+    border:1px solid var(--green);
+
+    color:var(--green);
+
+    background:#07130c;
+}
+
+.online{
+
+    color:var(--green);
+
+    font-size:12px;
+
+    font-family:monospace;
+}
+
+.status-grid{
+
+    display:flex;
+
+    gap:25px;
+
+    align-items:center;
+}
+
+.status-item{
+
+    font-family:monospace;
+
+    font-size:12px;
+
+    color:var(--muted);
+}
+
+.status-item strong{
+
+    display:block;
+
+    color:var(--text);
+
+    font-size:15px;
+
+}
+
+/* =====================================================
+TELAS
+===================================================== */
+
+.screen{
+
+    display:none;
+
+    animation:entrada .3s ease;
+}
+
+.screen.active{
+
+    display:block;
+}
+
+@keyframes entrada{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(12px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* =====================================================
+PAINÉIS
+===================================================== */
+
+.panel{
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(20,25,28,.97),
+            rgba(9,12,14,.98)
+        );
+
+    border:1px solid var(--line);
+
+    padding:30px;
+
+    margin-bottom:20px;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.4);
+
+    position:relative;
+}
+
+.panel::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-1px;
+
+    left:25px;
+
+    width:80px;
+
+    height:2px;
+
+    background:var(--green);
+}
+
+h1{
+
+    font-size:clamp(42px,7vw,78px);
+
+    line-height:.95;
+
+    letter-spacing:-3px;
+
+    color:white;
+
+    margin-bottom:18px;
+}
+
+h1 span{
+
+    color:var(--green);
+}
+
+h2{
+
+    font-size:30px;
+
+    color:white;
+
+    margin-bottom:12px;
+}
+
+h3{
+
+    color:var(--green);
+
+    margin-bottom:10px;
+}
+
+p{
+
+    color:var(--muted);
+
+    line-height:1.65;
+
+    margin-bottom:12px;
+}
+
+.mono{
+
+    font-family:monospace;
+}
+
+/* =====================================================
+ALERTA
+===================================================== */
+
+.alert{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:12px 15px;
+
+    background:#17130a;
+
+    border:1px solid #665214;
+
+    color:var(--yellow);
+
+    font-family:monospace;
+
+    margin-bottom:20px;
+}
+
+.alert-dot{
+
+    width:9px;
+
+    height:9px;
+
+    background:var(--yellow);
+
+    border-radius:50%;
+
+    box-shadow:0 0 12px var(--yellow);
+}
+
+/* =====================================================
+BOTÕES
+===================================================== */
+
+button{
+
+    border:1px solid var(--green);
+
+    background:#0b1c12;
+
+    color:var(--green);
+
+    padding:13px 19px;
+
+    font-weight:bold;
+
+    font-family:monospace;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+    margin:4px;
+}
+
+button:hover{
+
+    background:var(--green);
+
+    color:#061009;
+
+    box-shadow:
+        0 0 20px rgba(57,255,136,.2);
+
+    transform:translateY(-2px);
+}
+
+button.dark{
+
+    border-color:var(--line);
+
+    background:#101416;
+
+    color:var(--text);
+}
+
+button.warning{
+
+    border-color:var(--yellow);
+
+    background:#211b08;
+
+    color:var(--yellow);
+}
+
+button.danger{
+
+    border-color:var(--red);
+
+    background:#210d0d;
+
+    color:var(--red);
+}
+
+button.blue{
+
+    border-color:var(--blue);
+
+    background:#081923;
+
+    color:var(--blue);
+}
+
+/* =====================================================
+BRIEFING
+===================================================== */
+
+.briefing{
+
+    display:grid;
+
+    grid-template-columns:1.4fr .6fr;
+
+    gap:20px;
+
+    margin-top:30px;
+}
+
+.terminal{
+
+    background:#050807;
+
+    border:1px solid #21482f;
+
+    padding:22px;
+
+    font-family:monospace;
+
+    color:#8cffb5;
+
+    line-height:1.8;
+
+    min-height:180px;
+}
+
+.terminal-title{
+
+    color:var(--green);
+
+    border-bottom:1px solid #21482f;
+
+    padding-bottom:10px;
+
+    margin-bottom:15px;
+}
+
+.case-box{
+
+    border:1px solid var(--line);
+
+    padding:22px;
+
+    background:#0b0f11;
+}
+
+.case-number{
+
+    font-family:monospace;
+
+    color:var(--yellow);
+
+    font-size:13px;
+
+    margin-bottom:20px;
+}
+
+.big-number{
+
+    font-size:48px;
+
+    color:white;
+
+    font-weight:bold;
+}
+
+/* =====================================================
+MAPA
+===================================================== */
+
+.map-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+    gap:12px;
+
+    margin-top:25px;
+}
+
+.location{
+
+    min-height:170px;
+
+    background:#0c1012;
+
+    border:1px solid var(--line);
+
+    padding:22px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    position:relative;
+}
+
+.location:hover{
+
+    border-color:var(--green);
+
+    transform:translateY(-4px);
+
+    background:#0d1611;
+}
+
+.location-number{
+
+    position:absolute;
+
+    top:12px;
+
+    right:12px;
+
+    color:#394349;
+
+    font-family:monospace;
+
+    font-size:12px;
+}
+
+.location-icon{
+
+    font-size:38px;
+
+    margin-bottom:18px;
+
+    filter:grayscale(.4);
+}
+
+.location h3{
+
+    color:white;
+}
+
+.location small{
+
+    color:#68747b;
+}
+
+/* =====================================================
+OBJETOS
+===================================================== */
+
+.evidence-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(230px,1fr));
+
+    gap:15px;
+
+    margin-top:20px;
+}
+
+.evidence{
+
+    border:1px solid var(--line);
+
+    background:#0c1012;
+
+    padding:20px;
+
+    transition:.2s;
+}
+
+.evidence:hover{
+
+    border-color:var(--yellow);
+
+    transform:translateY(-3px);
+}
+
+.evidence-icon{
+
+    font-size:38px;
+
+    margin-bottom:12px;
+}
+
+.evidence-code{
+
+    color:var(--yellow);
+
+    font-family:monospace;
+
+    font-size:11px;
+
+    margin-bottom:8px;
+}
+
+.evidence.found{
+
+    border-color:var(--green);
+}
+
+/* =====================================================
+INVENTÁRIO
+===================================================== */
+
+.inventory{
+
+    min-height:120px;
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:10px;
+
+    padding:20px;
+
+    background:#070a0b;
+
+    border:1px dashed #344047;
+}
+
+.item{
+
+    padding:11px 14px;
+
+    border:1px solid var(--green-dark);
+
+    color:var(--green);
+
+    background:#09150e;
+
+    font-family:monospace;
+
+    cursor:grab;
+}
+
+/* =====================================================
+LABORATÓRIO
+===================================================== */
+
+.lab{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:20px;
+
+    margin-top:20px;
+}
+
+.drop{
+
+    min-height:200px;
+
+    border:2px dashed #31583f;
+
+    display:grid;
+
+    place-items:center;
+
+    text-align:center;
+
+    color:#65716a;
+
+    background:#080d0a;
+
+    transition:.2s;
+}
+
+.drop.dragover{
+
+    border-color:var(--green);
+
+    background:#0b1b11;
+
+    color:var(--green);
+}
+
+.result{
+
+    min-height:200px;
+
+    background:#060808;
+
+    border:1px solid var(--line);
+
+    padding:22px;
+
+    font-family:monospace;
+
+    white-space:pre-line;
+
+    color:#9eeeb8;
+}
+
+/* =====================================================
+SUSPEITOS
+===================================================== */
+
+.suspects{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:14px;
+
+    margin-top:20px;
+}
+
+.suspect{
+
+    background:#0c1012;
+
+    border:1px solid var(--line);
+
+    padding:20px;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.suspect:hover{
+
+    border-color:var(--blue);
+
+    transform:translateY(-4px);
+}
+
+.suspect.selected{
+
+    border-color:var(--green);
+
+    box-shadow:
+        inset 0 0 0 1px var(--green);
+}
+
+.face{
+
+    height:110px;
+
+    display:grid;
+
+    place-items:center;
+
+    font-size:55px;
+
+    background:#07090a;
+
+    border:1px solid #20282c;
+
+    margin-bottom:15px;
+}
+
+.codename{
+
+    font-family:monospace;
+
+    font-size:11px;
+
+    color:var(--blue);
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+}
+
+.probability{
+
+    margin-top:15px;
+}
+
+.prob-bar{
+
+    height:6px;
+
+    background:#20262a;
+
+    margin-top:7px;
+
+    overflow:hidden;
+}
+
+.prob-fill{
+
+    width:25%;
+
+    height:100%;
+
+    background:var(--red);
+
+    transition:.5s;
+}
+
+/* =====================================================
+INTERROGATÓRIO
+===================================================== */
+
+.interrogation{
+
+    display:grid;
+
+    grid-template-columns:280px 1fr;
+
+    gap:20px;
+}
+
+.question-list{
+
+    display:grid;
+
+    gap:8px;
+}
+
+.question{
+
+    padding:16px;
+
+    background:#0b0f11;
+
+    border:1px solid var(--line);
+
+    cursor:pointer;
+
+    color:#aab3b8;
+}
+
+.question:hover{
+
+    border-color:var(--blue);
+
+    color:white;
+}
+
+.answer-box{
+
+    min-height:300px;
+
+    background:#050708;
+
+    border:1px solid var(--line);
+
+    padding:25px;
+
+    font-family:monospace;
+
+    line-height:1.8;
+
+    color:#a7e9bc;
+}
+
+.answer-header{
+
+    color:var(--blue);
+
+    border-bottom:1px solid var(--line);
+
+    padding-bottom:12px;
+
+    margin-bottom:20px;
+}
+
+/* =====================================================
+TIMELINE
+===================================================== */
+
+.timeline{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:10px;
+
+    margin-top:20px;
+}
+
+.time{
+
+    min-height:170px;
+
+    border:1px dashed #384248;
+
+    background:#090c0e;
+
+    padding:18px;
+
+    text-align:center;
+}
+
+.time strong{
+
+    color:var(--yellow);
+
+    font-family:monospace;
+
+    font-size:20px;
+
+    display:block;
+
+    margin-bottom:20px;
+}
+
+.time.dragover{
+
+    border-color:var(--green);
+
+    background:#0a170e;
+}
+
+/* =====================================================
+QUADRO
+===================================================== */
+
+.board{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+    gap:15px;
+
+    margin-top:20px;
+}
+
+.board-box{
+
+    min-height:190px;
+
+    padding:20px;
+
+    border:1px dashed #39434a;
+
+    background:#090d0f;
+}
+
+.board-box.dragover{
+
+    border-color:var(--green);
+}
+
+.board-box h3{
+
+    color:white;
+
+    border-bottom:1px solid var(--line);
+
+    padding-bottom:10px;
+}
+
+/* =====================================================
+ACUSAÇÃO
+===================================================== */
+
+.accuse{
+
+    max-width:700px;
+
+    margin:auto;
+
+    text-align:center;
+}
+
+.target{
+
+    font-size:55px;
+
+    color:var(--red);
+
+    font-family:monospace;
+
+    margin:25px 0;
+}
+
+.warning-box{
+
+    padding:20px;
+
+    border:1px solid #632222;
+
+    background:#160909;
+
+    color:#ff9999;
+
+    font-family:monospace;
+
+    margin-bottom:20px;
+}
+
+/* =====================================================
+FINAL
+===================================================== */
+
+.final{
+
+    max-width:850px;
+
+    margin:auto;
+
+    text-align:center;
+}
+
+.final-icon{
+
+    font-size:75px;
+
+    margin-bottom:20px;
+}
+
+.final-score{
+
+    font-size:60px;
+
+    font-weight:bold;
+
+    color:var(--green);
+
+    font-family:monospace;
+
+    margin:20px;
+}
+
+/* =====================================================
+TOAST
+===================================================== */
+
+#toast{
+
+    position:fixed;
+
+    right:20px;
+
+    bottom:20px;
+
+    background:#0a0f0c;
+
+    border:1px solid var(--green);
+
+    color:var(--green);
+
+    padding:15px 20px;
+
+    font-family:monospace;
+
+    transform:translateY(120px);
+
+    opacity:0;
+
+    transition:.3s;
+
+    z-index:1000;
+}
+
+#toast.show{
+
+    transform:translateY(0);
+
+    opacity:1;
+}
+
+/* =====================================================
+RESPONSIVO
+===================================================== */
+
+@media(max-width:900px){
+
+    .briefing,
+    .lab,
+    .interrogation{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .suspects{
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+    }
+
+}
+
+@media(max-width:650px){
+
+    .topbar{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        position:static;
+
+    }
+
+    .status-grid{
+
+        width:100%;
+
+        justify-content:space-between;
+
+    }
+
+    .map-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .suspects{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .timeline{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .board{
+
+        grid-template-columns:1fr;
+
+    }
+
+    button{
+
+        width:100%;
+
+        margin:4px 0;
+
+    }
+
+}
+
+</style>
+
 </head>
+
 <body>
-    <div class="container">
-        <header>
-            <h1>🎮 Caça à Palavra - IA 🤖</h1>
-            <p class="subtitle">Descubra palavras relacionadas à Inteligência Artificial!</p>
-        </header>
 
-        <div class="game-wrapper">
-            <!-- Left Panel - Words List -->
-            <div class="left-panel">
-                <div class="info-section">
-                    <h2>📚 Palavras</h2>
-                    <div id="wordsList" class="words-list"></div>
-                </div>
+<div id="toast"></div>
 
-                <div class="stats-section">
-                    <h3>Progresso</h3>
-                    <div id="progressText">Encontradas: 0/10</div>
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill"></div>
-                    </div>
-                </div>
+<div class="container">
 
-                <div class="controls">
-                    <button id="clearBtn" class="control-btn">🗑️ Limpar</button>
-                    <button id="hintBtn" class="control-btn">💡 Dica</button>
-                </div>
-                <button id="resetBtn" class="reset-btn">🔄 Reiniciar</button>
-            </div>
 
-            <!-- Center - Game Board -->
-            <div class="game-section">
-                <div id="gameBoard" class="game-board"></div>
-            </div>
+<!-- =====================================================
+TOPBAR
+===================================================== -->
 
-            <!-- Right Panel - Definition -->
-            <div class="right-panel">
-                <div class="definition-section">
-                    <h2>📖 Definição</h2>
-                    <div id="definitionBox" class="definition-box">
-                        <p>Clique em uma palavra da lista para ver sua definição e aprender mais sobre IA!</p>
-                    </div>
-                </div>
+<header class="topbar">
 
-                <div class="tips-section">
-                    <h3>💡 Dicas</h3>
-                    <ul class="tips-list">
-                        <li>Arraste o mouse para selecionar as letras</li>
-                        <li>Palavras podem estar em qualquer direção</li>
-                        <li>Use as dicas para encontrar novas palavras</li>
-                        <li>Aprenda sobre IA enquanto joga!</li>
-                    </ul>
-                </div>
-            </div>
+    <div class="brand">
+
+        <div class="brand-icon">
+            AZ
         </div>
 
-        <footer>
-            <p>🚀 Aprenda sobre Inteligência Artificial de forma divertida!</p>
-        </footer>
+        ARQUIVO ZERO
+
+        <span class="online">
+            ● ONLINE
+        </span>
+
     </div>
 
-    <script>
-        // Definições das palavras com dicas
-        const WORDS = [
+    <div class="status-grid">
+
+        <div class="status-item">
+            PONTOS
+            <strong id="score">0000</strong>
+        </div>
+
+        <div class="status-item">
+            BATERIA
+            <strong id="batteryText">100%</strong>
+        </div>
+
+        <div class="status-item">
+            EVIDÊNCIAS
+            <strong id="evidenceCount">0/10</strong>
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+INÍCIO
+===================================================== -->
+
+<section id="inicio" class="screen active">
+
+    <div class="panel">
+
+        <div class="alert">
+
+            <span class="alert-dot"></span>
+
+            ALERTA // CASO CLASSIFICADO COMO CONFIDENCIAL
+
+        </div>
+
+        <h1>
+            ARQUIVO<br>
+            <span>ZERO</span>
+        </h1>
+
+        <p style="font-size:20px;color:#b8c0c5">
+
+            Sistema de investigação digital —
+            Unidade de Crimes Domésticos.
+
+        </p>
+
+        <div class="briefing">
+
+            <div class="terminal">
+
+                <div class="terminal-title">
+                    TERMINAL // BRIEFING
+                </div>
+
+                &gt; CONEXÃO ESTABELECIDA<br>
+                &gt; CASO: AZ-014<br>
+                &gt; PRIORIDADE: MÉDIA<br>
+                &gt; LOCAL: RESIDÊNCIA 014<br>
+                &gt; OBJETO: PÃO ARTESANAL<br>
+                &gt; STATUS: DESAPARECIDO<br>
+                &gt;<br>
+                &gt; Quatro pessoas estavam na residência.<br>
+                &gt; Uma delas está mentindo.<br>
+                &gt;<br>
+                &gt; Sua missão começa agora.
+
+            </div>
+
+            <div class="case-box">
+
+                <div class="case-number">
+                    CASE ID
+                </div>
+
+                <div class="big-number">
+                    AZ-014
+                </div>
+
+                <p>
+                    Janela estimada do desaparecimento:
+                </p>
+
+                <h3>
+                    07:45 — 08:00
+                </h3>
+
+                <p>
+                    Nenhuma prisão autorizada até
+                    confirmação das evidências.
+                </p>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <button onclick="mudarTela('mapa')">
+            [ INICIAR INVESTIGAÇÃO ]
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+MAPA
+===================================================== -->
+
+<section id="mapa" class="screen">
+
+    <div class="panel">
+
+        <div class="alert">
+
+            <span class="alert-dot"></span>
+
+            CENA DO CRIME // ÁREA MONITORADA
+
+        </div>
+
+        <h2>
+            Planta da Residência
+        </h2>
+
+        <p>
+            Selecione uma área para iniciar a busca.
+            Cada investigação consome energia do sistema.
+        </p>
+
+        <div class="map-grid">
+
+            <div class="location"
+                 onclick="abrirLocal('cozinha')">
+
+                <span class="location-number">
+                    01
+                </span>
+
+                <div class="location-icon">
+                    🍳
+                </div>
+
+                <h3>
+                    COZINHA
+                </h3>
+
+                <small>
+                    Ponto principal do desaparecimento
+                </small>
+
+            </div>
+
+
+            <div class="location"
+                 onclick="abrirLocal('sala')">
+
+                <span class="location-number">
+                    02
+                </span>
+
+                <div class="location-icon">
+                    🛋️
+                </div>
+
+                <h3>
+                    SALA
+                </h3>
+
+                <small>
+                    Objetos fora do lugar
+                </small>
+
+            </div>
+
+
+            <div class="location"
+                 onclick="abrirLocal('quarto')">
+
+                <span class="location-number">
+                    03
+                </span>
+
+                <div class="location-icon">
+                    🎮
+                </div>
+
+                <h3>
+                    QUARTO
+                </h3>
+
+                <small>
+                    Álibi de Lucas
+                </small>
+
+            </div>
+
+
+            <div class="location"
+                 onclick="abrirLocal('jardim')">
+
+                <span class="location-number">
+                    04
+                </span>
+
+                <div class="location-icon">
+                    🌳
+                </div>
+
+                <h3>
+                    JARDIM
+                </h3>
+
+                <small>
+                    Pegadas detectadas
+                </small>
+
+            </div>
+
+
+            <div class="location"
+                 onclick="abrirLocal('garagem')">
+
+                <span class="location-number">
+                    05
+                </span>
+
+                <div class="location-icon">
+                    🚗
+                </div>
+
+                <h3>
+                    GARAGEM
+                </h3>
+
+                <small>
+                    Sistema de câmera
+                </small>
+
+            </div>
+
+
+            <div class="location"
+                 onclick="mudarTela('suspeitos')">
+
+                <span class="location-number">
+                    06
+                </span>
+
+                <div class="location-icon">
+                    👤
+                </div>
+
+                <h3>
+                    SUSPEITOS
+                </h3>
+
+                <small>
+                    Quatro perfis identificados
+                </small>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <button class="dark"
+                onclick="mudarTela('inventario')">
+            [ INVENTÁRIO ]
+        </button>
+
+        <button class="dark"
+                onclick="mudarTela('timeline')">
+            [ LINHA DO TEMPO ]
+        </button>
+
+        <button class="dark"
+                onclick="mudarTela('interrogatorio')">
+            [ INTERROGATÓRIO ]
+        </button>
+
+        <button
+                onclick="mudarTela('quadro')">
+            [ QUADRO DE EVIDÊNCIAS ]
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+LOCAL
+===================================================== -->
+
+<section id="local" class="screen">
+
+    <div class="panel">
+
+        <div class="alert">
+
+            <span class="alert-dot"></span>
+
+            SCANNER ATIVO
+
+        </div>
+
+        <h2 id="localTitulo">
+            LOCAL
+        </h2>
+
+        <p id="localDescricao">
+            Analisando...
+        </p>
+
+        <div class="terminal">
+
+            <div class="terminal-title">
+                SISTEMA DE ANÁLISE
+            </div>
+
+            <div id="localTerminal">
+                &gt; Iniciando sensores...
+            </div>
+
+        </div>
+
+        <div
+            id="evidenceGrid"
+            class="evidence-grid">
+        </div>
+
+        <br>
+
+        <button class="dark"
+                onclick="mudarTela('mapa')">
+
+            [ VOLTAR AO MAPA ]
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+INVENTÁRIO
+===================================================== -->
+
+<section id="inventario" class="screen">
+
+    <div class="panel">
+
+        <h2>
+            Inventário de Evidências
+        </h2>
+
+        <p>
+            Toda pista coletada é registrada
+            automaticamente no sistema.
+        </p>
+
+        <div
+            id="inventory"
+            class="inventory">
+
+            <span style="color:#58636a">
+                Nenhuma evidência coletada.
+            </span>
+
+        </div>
+
+        <br>
+
+        <h3>
+            LABORATÓRIO DIGITAL
+        </h3>
+
+        <div class="lab">
+
+            <div
+                id="drop"
+                class="drop">
+
+                ARRASTE UMA EVIDÊNCIA AQUI
+
+            </div>
+
+            <div
+                id="labResult"
+                class="result">
+
+                &gt; LABORATÓRIO AGUARDANDO AMOSTRA...
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <button class="dark"
+                onclick="mudarTela('mapa')">
+
+            [ VOLTAR ]
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+SUSPEITOS
+===================================================== -->
+
+<section id="suspeitos" class="screen">
+
+    <div class="panel">
+
+        <div class="alert">
+
+            <span class="alert-dot"></span>
+
+            PERFIS IDENTIFICADOS // NÃO COMPARTILHAR
+
+        </div>
+
+        <h2>
+            Pessoas de Interesse
+        </h2>
+
+        <p>
+            Analise os quatro indivíduos.
+            A porcentagem muda conforme novas
+            evidências são descobertas.
+        </p>
+
+        <div class="suspects">
+
+            <div
+                id="suspect-lucas"
+                class="suspect"
+                onclick="selecionar('lucas')">
+
+                <div class="face">
+                    🎮
+                </div>
+
+                <div class="codename">
+                    SUS-01 // GAMER
+                </div>
+
+                <h3>
+                    Lucas
+                </h3>
+
+                <p>
+                    Afirma que permaneceu no quarto.
+                </p>
+
+                <div class="probability">
+
+                    <span>
+                        Probabilidade:
+                    </span>
+
+                    <b id="chance-lucas">
+                        25%
+                    </b>
+
+                    <div class="prob-bar">
+
+                        <div
+                            id="bar-lucas"
+                            class="prob-fill">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="suspect-regina"
+                class="suspect"
+                onclick="selecionar('regina')">
+
+                <div class="face">
+                    📱
+                </div>
+
+                <div class="codename">
+                    SUS-02 // INFLUENCER
+                </div>
+
+                <h3>
+                    Regina
+                </h3>
+
+                <p>
+                    Diz que estava fazendo jejum.
+                </p>
+
+                <div class="probability">
+
+                    <span>
+                        Probabilidade:
+                    </span>
+
+                    <b id="chance-regina">
+                        25%
+                    </b>
+
+                    <div class="prob-bar">
+
+                        <div
+                            id="bar-regina"
+                            class="prob-fill">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="suspect-mingau"
+                class="suspect"
+                onclick="selecionar('mingau')">
+
+                <div class="face">
+                    🐈
+                </div>
+
+                <div class="codename">
+                    SUS-03 // ANIMAL
+                </div>
+
+                <h3>
+                    Mingau
+                </h3>
+
+                <p>
+                    Gato da residência.
+                    Pelagem cinza.
+                </p>
+
+                <div class="probability">
+
+                    <span>
+                        Probabilidade:
+                    </span>
+
+                    <b id="chance-mingau">
+                        25%
+                    </b>
+
+                    <div class="prob-bar">
+
+                        <div
+                            id="bar-mingau"
+                            class="prob-fill">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="suspect-jorge"
+                class="suspect"
+                onclick="selecionar('jorge')">
+
+                <div class="face">
+                    🌱
+                </div>
+
+                <div class="codename">
+                    SUS-04 // VIZINHO
+                </div>
+
+                <h3>
+                    Seu Jorge
+                </h3>
+
+                <p>
+                    Afirma ter permanecido no jardim.
+                </p>
+
+                <div class="probability">
+
+                    <span>
+                        Probabilidade:
+                    </span>
+
+                    <b id="chance-jorge">
+                        25%
+                    </b>
+
+                    <div class="prob-bar">
+
+                        <div
+                            id="bar-jorge"
+                            class="prob-fill">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="terminal">
+
+            <div class="terminal-title">
+                ANÁLISE AUTOMÁTICA
+            </div>
+
+            <div id="suspectAnalysis">
+
+                &gt; Selecione um suspeito.
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <button class="blue"
+                onclick="mudarTela('interrogatorio')">
+
+            [ INTERROGAR ]
+
+        </button>
+
+        <button class="warning"
+                onclick="irAcusacao()">
+
+            [ PREPARAR ACUSAÇÃO ]
+
+        </button>
+
+        <button class="dark"
+                onclick="mudarTela('mapa')">
+
+            [ VOLTAR ]
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+INTERROGATÓRIO
+===================================================== -->
+
+<section id="interrogatorio" class="screen">
+
+    <div class="panel">
+
+        <h2>
+            Sala de Interrogatório
+        </h2>
+
+        <p>
+            Escolha um indivíduo e faça perguntas.
+        </p>
+
+        <div class="interrogation">
+
+            <div>
+
+                <div class="question-list">
+
+                    <div class="question"
+                         onclick="pergunta('lucas',0)">
+                        Lucas // Onde você estava?
+                    </div>
+
+                    <div class="question"
+                         onclick="pergunta('lucas',1)">
+                        Lucas // O que você estava fazendo?
+                    </div>
+
+                    <div class="question"
+                         onclick="pergunta('regina',0)">
+                        Regina // Você entrou na cozinha?
+                    </div>
+
+                    <div class="question"
+                         onclick="pergunta('regina',1)">
+                        Regina // Você escreveu o bilhete?
+                    </div>
+
+                    <div class="question"
+                         onclick="pergunta('mingau',0)">
+                        Mingau // Onde você estava?
+                    </div>
+
+                    <div class="question"
+                         onclick="pergunta('mingau',1)">
+                        Mingau // Você viu o pão?
+                    </div>
+
+                    <div class="question"
+                         onclick="pergunta('jorge',0)">
+                        Jorge // O que fazia no jardim?
+                    </div>
+
+                    <div class="question"
+                         onclick="pergunta('jorge',1)">
+                        Jorge // Por que suas botas têm farinha?
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div
+                id="answer"
+                class="answer-box">
+
+                <div class="answer-header">
+                    INTERROGATÓRIO // AGUARDANDO
+                </div>
+
+                &gt; Selecione uma pergunta.
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <button class="dark"
+                onclick="mudarTela('mapa')">
+
+            [ VOLTAR ]
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+TIMELINE
+===================================================== -->
+
+<section id="timeline" class="screen">
+
+    <div class="panel">
+
+        <h2>
+            Reconstrução Temporal
+        </h2>
+
+        <p>
+            Arraste cada suspeito para o horário
+            correspondente.
+        </p>
+
+        <div class="inventory">
+
+            <div
+                class="item"
+                draggable="true"
+                ondragstart="dragPessoa(event,'Lucas')">
+
+                Lucas
+
+            </div>
+
+            <div
+                class="item"
+                draggable="true"
+                ondragstart="dragPessoa(event,'Regina')">
+
+                Regina
+
+            </div>
+
+            <div
+                class="item"
+                draggable="true"
+                ondragstart="dragPessoa(event,'Mingau')">
+
+                Mingau
+
+            </div>
+
+            <div
+                class="item"
+                draggable="true"
+                ondragstart="dragPessoa(event,'Jorge')">
+
+                Jorge
+
+            </div>
+
+        </div>
+
+        <div class="timeline">
+
+            <div
+                class="time"
+                ondragover="allowDrop(event)"
+                ondrop="dropTempo(event,'07:30')">
+
+                <strong>
+                    07:30
+                </strong>
+
+                <span id="t0730">
+                    Vazio
+                </span>
+
+            </div>
+
+            <div
+                class="time"
+                ondragover="allowDrop(event)"
+                ondrop="dropTempo(event,'07:45')">
+
+                <strong>
+                    07:45
+                </strong>
+
+                <span id="t0745">
+                    Vazio
+                </span>
+
+            </div>
+
+            <div
+                class="time"
+                ondragover="allowDrop(event)"
+                ondrop="dropTempo(event,'08:00')">
+
+                <strong>
+                    08:00
+                </strong>
+
+                <span id="t0800">
+                    Vazio
+                </span>
+
+            </div>
+
+            <div
+                class="time"
+                ondragover="allowDrop(event)"
+                ondrop="dropTempo(event,'08:15')">
+
+                <strong>
+                    08:15
+                </strong>
+
+                <span id="t0815">
+                    Vazio
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="terminal">
+
+            <div class="terminal-title">
+                SISTEMA TEMPORAL
+            </div>
+
+            <div id="timelineResult">
+
+                &gt; Nenhum movimento registrado.
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <button class="dark"
+                onclick="mudarTela('mapa')">
+
+            [ VOLTAR ]
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+QUADRO
+===================================================== -->
+
+<section id="quadro" class="screen">
+
+    <div class="panel">
+
+        <h2>
+            Quadro de Evidências
+        </h2>
+
+        <p>
+            Relacione as evidências encontradas
+            aos suspeitos.
+        </p>
+
+        <div
+            id="boardItems"
+            class="inventory">
+        </div>
+
+        <div class="board">
+
+            <div
+                class="board-box"
+                ondragover="allowDrop(event)"
+                ondrop="connect(event,'lucas')">
+
+                <h3>
+                    LUCAS
+                </h3>
+
+                <div id="board-lucas">
+                    Arraste evidências aqui.
+                </div>
+
+            </div>
+
+            <div
+                class="board-box"
+                ondragover="allowDrop(event)"
+                ondrop="connect(event,'regina')">
+
+                <h3>
+                    REGINA
+                </h3>
+
+                <div id="board-regina">
+                    Arraste evidências aqui.
+                </div>
+
+            </div>
+
+            <div
+                class="board-box"
+                ondragover="allowDrop(event)"
+                ondrop="connect(event,'mingau')">
+
+                <h3>
+                    MINGAU
+                </h3>
+
+                <div id="board-mingau">
+                    Arraste evidências aqui.
+                </div>
+
+            </div>
+
+            <div
+                class="board-box"
+                ondragover="allowDrop(event)"
+                ondrop="connect(event,'jorge')">
+
+                <h3>
+                    JORGE
+                </h3>
+
+                <div id="board-jorge">
+                    Arraste evidências aqui.
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="terminal">
+
+            <div class="terminal-title">
+                ANÁLISE DAS CONEXÕES
+            </div>
+
+            <div id="connectionResult">
+
+                &gt; Aguardando conexões.
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <button class="dark"
+                onclick="mudarTela('mapa')">
+
+            [ VOLTAR ]
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+ACUSAÇÃO
+===================================================== -->
+
+<section id="acusacao" class="screen">
+
+    <div class="panel">
+
+        <div class="accuse">
+
+            <div class="alert">
+
+                <span class="alert-dot"></span>
+
+                ATENÇÃO // DECISÃO IRREVERSÍVEL
+
+            </div>
+
+            <h2>
+                Relatório de Acusação
+            </h2>
+
+            <p>
+                O sistema registrará sua decisão.
+            </p>
+
+            <div
+                id="target"
+                class="target">
+
+                ---
+
+            </div>
+
+            <div class="warning-box">
+
+                Você está prestes a acusar
+                oficialmente esta pessoa.
+
+                <br><br>
+
+                Confirme somente se possuir
+                evidências suficientes.
+
+            </div>
+
+            <button class="danger"
+                    onclick="finalizar()">
+
+                [ CONFIRMAR ACUSAÇÃO ]
+
+            </button>
+
+            <button class="dark"
+                    onclick="mudarTela('suspeitos')">
+
+                [ REVISAR CASO ]
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+FINAL
+===================================================== -->
+
+<section id="final" class="screen">
+
+    <div class="panel">
+
+        <div class="final">
+
+            <div
+                id="finalIcon"
+                class="final-icon">
+
+                🔎
+
+            </div>
+
+            <h2 id="finalTitle">
+                Caso encerrado
+            </h2>
+
+            <p id="finalText">
+            </p>
+
+            <div class="final-score">
+
+                <span id="finalScore">
+                    0000
+                </span>
+
+                XP
+
+            </div>
+
+            <div class="terminal">
+
+                <div class="terminal-title">
+                    RELATÓRIO FINAL
+                </div>
+
+                <div id="finalReport">
+                </div>
+
+            </div>
+
+            <br>
+
+            <button onclick="location.reload()">
+
+                [ NOVA INVESTIGAÇÃO ]
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+ESTADO
+===================================================== */
+
+let score = 0;
+
+let battery = 100;
+
+let evidence = [];
+
+let selected = null;
+
+let interrogated = {};
+
+let chances = {
+
+    lucas:25,
+
+    regina:25,
+
+    mingau:25,
+
+    jorge:25
+
+};
+
+const names = {
+
+    lucas:"Lucas",
+
+    regina:"Regina",
+
+    mingau:"Mingau",
+
+    jorge:"Seu Jorge"
+
+};
+
+
+/* =====================================================
+EVIDÊNCIAS
+===================================================== */
+
+const locations = {
+
+    cozinha:{
+
+        title:"COZINHA",
+
+        description:
+        "A área principal do desaparecimento.",
+
+        terminal:
+        "> FARINHA DETECTADA\n"+
+        "> TEMPERATURA NORMAL\n"+
+        "> RESÍDUOS ORGÂNICOS DETECTADOS",
+
+        objects:[
+
             {
-                word: 'ALGORITMO',
-                hint: 'Sequência de passos para resolver um problema',
-                definition: 'Um conjunto de instruções ordenadas para resolver um problema ou executar uma tarefa.'
+                id:"pelo",
+                icon:"🐾",
+                code:"EV-001",
+                name:"Pelo cinzento",
+                text:
+                "Pequeno pelo encontrado próximo à bancada.",
+                suspect:"mingau"
             },
+
             {
-                word: 'NEURAL',
-                hint: 'Relacionado a redes de aprendizado',
-                definition: 'Baseado na estrutura do cérebro. As redes neurais artificiais simulam o funcionamento dos neurônios.'
+                id:"migalhas",
+                icon:"🍞",
+                code:"EV-002",
+                name:"Migalhas",
+                text:
+                "Migalhas do mesmo tipo de pão desaparecido.",
+                suspect:"mingau"
             },
+
             {
-                word: 'APRENDIZADO',
-                hint: 'Processo de machine learning',
-                definition: 'Capacidade de um sistema melhorar seu desempenho através da experiência e dados.'
+                id:"bilhete",
+                icon:"📄",
+                code:"EV-003",
+                name:"Bilhete",
+                text:
+                "Bilhete relacionado a uma dieta.",
+                suspect:"regina"
+            }
+
+        ]
+
+    },
+
+
+    sala:{
+
+        title:"SALA",
+
+        description:
+        "A sala apresenta sinais de movimentação.",
+
+        terminal:
+        "> SOFÁ ANALISADO\n"+
+        "> OBJETO ESTRANHO DETECTADO\n"+
+        "> MARCAS DE PATAS IDENTIFICADAS",
+
+        objects:[
+
+            {
+                id:"patas",
+                icon:"🐾",
+                code:"EV-004",
+                name:"Marcas de patas",
+                text:
+                "Pequenas marcas encontradas no sofá.",
+                suspect:"mingau"
             },
+
             {
-                word: 'DADOS',
-                hint: 'Informações usadas no treinamento',
-                definition: 'Conjunto de informações utilizadas para treinar e validar modelos de IA.'
+                id:"controle",
+                icon:"🎮",
+                code:"EV-005",
+                name:"Controle ligado",
+                text:
+                "Controle de videogame ainda estava ligado.",
+                suspect:"lucas"
+            }
+
+        ]
+
+    },
+
+
+    quarto:{
+
+        title:"QUARTO",
+
+        description:
+        "Quarto utilizado por Lucas.",
+
+        terminal:
+        "> COMPUTADOR LIGADO\n"+
+        "> ÚLTIMA ATIVIDADE: 07:32\n"+
+        "> CALÇADO TAMANHO 40 DETECTADO",
+
+        objects:[
+
+            {
+                id:"computador",
+                icon:"💻",
+                code:"EV-006",
+                name:"Registro do computador",
+                text:
+                "Atividade registrada às 07:32.",
+                suspect:"lucas"
             },
+
             {
-                word: 'MODELO',
-                hint: 'Estrutura matemática de uma IA',
-                definition: 'Representação matemática que a IA usa para fazer previsões e tomar decisões.'
+                id:"tenis",
+                icon:"👟",
+                code:"EV-007",
+                name:"Tênis tamanho 40",
+                text:
+                "Calçado compatível com uma pegada encontrada.",
+                suspect:"lucas"
+            }
+
+        ]
+
+    },
+
+
+    jardim:{
+
+        title:"JARDIM",
+
+        description:
+        "Área externa da residência.",
+
+        terminal:
+        "> SOLO VERMELHO DETECTADO\n"+
+        "> PEGADAS HUMANAS\n"+
+        "> BOTAS IDENTIFICADAS",
+
+        objects:[
+
+            {
+                id:"terra",
+                icon:"🌱",
+                code:"EV-008",
+                name:"Terra vermelha",
+                text:
+                "Solo vermelho encontrado nas pegadas.",
+                suspect:"jorge"
             },
+
             {
-                word: 'TREINO',
-                hint: 'Processo de ensinar a IA',
-                definition: 'Fase onde o modelo é alimentado com dados para aprender padrões e melhorar.'
-            },
+                id:"botas",
+                icon:"🥾",
+                code:"EV-009",
+                name:"Botas com farinha",
+                text:
+                "Botas apresentam pequenas partículas de farinha.",
+                suspect:"jorge"
+            }
+
+        ]
+
+    },
+
+
+    garagem:{
+
+        title:"GARAGEM",
+
+        description:
+        "Área com equipamentos de segurança.",
+
+        terminal:
+        "> CÂMERA ENCONTRADA\n"+
+        "> ARQUIVO CORROMPIDO\n"+
+        "> RECUPERAÇÃO PARCIAL POSSÍVEL",
+
+        objects:[
+
             {
-                word: 'PREDICAO',
-                hint: 'Prever resultados futuros',
-                definition: 'Capacidade de uma IA estimar ou adivinhar resultados com base no aprendizado anterior.'
-            },
-            {
-                word: 'MAQUINA',
-                hint: 'Computador que executa IA',
-                definition: 'Dispositivo ou computador capaz de processar informações e executar algoritmos de IA.'
-            },
-            {
-                word: 'INTELIGENCIA',
-                hint: 'Capacidade de aprender e raciocinar',
-                definition: 'Habilidade de adquirir conhecimento, compreender e aplicar informações para resolver problemas.'
-            },
-            {
-                word: 'ARTIFICIAL',
-                hint: 'Criada pelo homem, não natural',
-                definition: 'Algo que é feito, criado ou produzido por seres humanos, não ocorrendo naturalmente.'
-            }
-        ];
-
-        // Configurações
-        const GRID_SIZE = 10;
-        let gameBoard = [];
-        let selectedCells = [];
-        let foundWords = new Set();
-        let usedHints = new Set();
-
-        // Inicializar o jogo
-        function initGame() {
-            generateBoard();
-            renderBoard();
-            renderWordsList();
-            updateProgress();
-        }
-
-        // Gerar grade com palavras
-        function generateBoard() {
-            // Criar grade vazia
-            gameBoard = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(''));
-
-            // Colocar palavras na grade
-            WORDS.forEach(wordObj => {
-                placeWord(wordObj.word);
-            });
-
-            // Preencher espaços vazios com letras aleatórias
-            for (let i = 0; i < GRID_SIZE; i++) {
-                for (let j = 0; j < GRID_SIZE; j++) {
-                    if (gameBoard[i][j] === '') {
-                        gameBoard[i][j] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-                    }
-                }
-            }
-        }
-
-        // Colocar uma palavra na grade
-        function placeWord(word) {
-            let placed = false;
-            let attempts = 0;
-            const maxAttempts = 50;
-
-            while (!placed && attempts < maxAttempts) {
-                const direction = Math.floor(Math.random() * 8);
-                const row = Math.floor(Math.random() * GRID_SIZE);
-                const col = Math.floor(Math.random() * GRID_SIZE);
-
-                if (canPlaceWord(word, row, col, direction)) {
-                    placeWordInGrid(word, row, col, direction);
-                    placed = true;
-                }
-                attempts++;
-            }
-        }
-
-        // Verificar se pode colocar uma palavra
-        function canPlaceWord(word, row, col, direction) {
-            const [dRow, dCol] = getDirection(direction);
-            
-            for (let i = 0; i < word.length; i++) {
-                const newRow = row + dRow * i;
-                const newCol = col + dCol * i;
-
-                if (newRow < 0 || newRow >= GRID_SIZE || newCol < 0 || newCol >= GRID_SIZE) {
-                    return false;
-                }
-
-                const cell = gameBoard[newRow][newCol];
-                if (cell !== '' && cell !== word[i]) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        // Colocar palavra na grade
-        function placeWordInGrid(word, row, col, direction) {
-            const [dRow, dCol] = getDirection(direction);
-            
-            for (let i = 0; i < word.length; i++) {
-                const newRow = row + dRow * i;
-                const newCol = col + dCol * i;
-                gameBoard[newRow][newCol] = word[i];
-            }
-        }
-
-        // Obter direção (8 direções possíveis)
-        function getDirection(direction) {
-            const directions = [
-                [0, 1],   // Direita
-                [0, -1],  // Esquerda
-                [1, 0],   // Baixo
-                [-1, 0],  // Cima
-                [1, 1],   // Diagonal baixo-direita
-                [1, -1],  // Diagonal baixo-esquerda
-                [-1, 1],  // Diagonal cima-direita
-                [-1, -1]  // Diagonal cima-esquerda
-            ];
-            return directions[direction];
-        }
-
-        // Renderizar grade na tela
-        function renderBoard() {
-            const boardDiv = document.getElementById('gameBoard');
-            boardDiv.innerHTML = '';
-
-            for (let i = 0; i < GRID_SIZE; i++) {
-                for (let j = 0; j < GRID_SIZE; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'letter-cell';
-                    cell.textContent = gameBoard[i][j];
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-
-                    cell.addEventListener('mousedown', () => startSelection(i, j));
-                    cell.addEventListener('mouseover', () => continueSelection(i, j));
-                    cell.addEventListener('mouseup', endSelection);
-                    cell.addEventListener('click', () => selectCell(i, j));
-
-                    boardDiv.appendChild(cell);
-                }
-            }
-        }
-
-        // Iniciar seleção
-        let isSelecting = false;
-
-        function startSelection(row, col) {
-            isSelecting = true;
-            selectedCells = [[row, col]];
-            updateSelectedDisplay();
-        }
-
-        // Continuar seleção
-        function continueSelection(row, col) {
-            if (!isSelecting) return;
-
-            const lastCell = selectedCells[selectedCells.length - 1];
-            if (lastCell && isAdjacent(lastCell, [row, col])) {
-                if (!selectedCells.some(cell => cell[0] === row && cell[1] === col)) {
-                    selectedCells.push([row, col]);
-                    updateSelectedDisplay();
-                }
-            }
-        }
-
-        // Finalizar seleção
-        function endSelection() {
-            isSelecting = false;
-            checkWord();
-        }
-
-        // Verificar adjacência
-        function isAdjacent(cell1, cell2) {
-            const rowDiff = Math.abs(cell1[0] - cell2[0]);
-            const colDiff = Math.abs(cell1[1] - cell2[1]);
-            return rowDiff <= 1 && colDiff <= 1 && (rowDiff + colDiff) > 0;
-        }
-
-        // Atualizar display de seleção
-        function updateSelectedDisplay() {
-            document.querySelectorAll('.letter-cell').forEach(cell => {
-                cell.classList.remove('selected');
-            });
-
-            selectedCells.forEach(([row, col]) => {
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                if (cell) {
-                    cell.classList.add('selected');
-                }
-            });
-        }
-
-        // Verificar se a seleção forma uma palavra
-        function checkWord() {
-            if (selectedCells.length === 0) return;
-
-            const selectedWord = selectedCells.map(([row, col]) => gameBoard[row][col]).join('');
-
-            for (const wordObj of WORDS) {
-                if (foundWords.has(wordObj.word)) continue;
-
-                if (selectedWord === wordObj.word) {
-                    markWordAsFound(wordObj.word);
-                    markCellsAsFound(selectedCells);
-                    updateProgress();
-                    showMessage(`${wordObj.word} encontrada! 🎉`);
-                    checkCompletion();
-                    return;
-                }
-
-                // Verificar ao contrário
-                if (selectedWord === wordObj.word.split('').reverse().join('')) {
-                    markWordAsFound(wordObj.word);
-                    markCellsAsFound(selectedCells);
-                    updateProgress();
-                    showMessage(`${wordObj.word} encontrada! 🎉`);
-                    checkCompletion();
-                    return;
-                }
+                id:"camera",
+                icon:"📹",
+                code:"EV-010",
+                name:"Gravação de segurança",
+                text:
+                "Registro recuperado da câmera.",
+                suspect:"mingau"
             }
 
-            clearSelection();
-        }
+        ]
 
-        // Marcar palavra como encontrada
-        function markWordAsFound(word) {
-            foundWords.add(word);
-            const item = document.querySelector(`[data-word="${word}"]`);
-            if (item) {
-                item.classList.add('found');
-            }
-        }
+    }
 
-        // Marcar células como encontradas
-        function markCellsAsFound(cells) {
-            cells.forEach(([row, col]) => {
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                if (cell) {
-                    cell.classList.add('found');
-                }
-            });
-        }
+};
 
-        // Limpar seleção
-        function clearSelection() {
-            selectedCells = [];
-            updateSelectedDisplay();
-        }
 
-        // Atualizar progresso
-        function updateProgress() {
-            const found = foundWords.size;
-            const total = WORDS.length;
-            const percentage = (found / total) * 100;
+/* =====================================================
+TELAS
+===================================================== */
 
-            document.getElementById('progressText').textContent = `Encontradas: ${found}/${total}`;
-            document.getElementById('progressFill').style.width = percentage + '%';
-        }
+function mudarTela(id){
 
-        // Renderizar lista de palavras
-        function renderWordsList() {
-            const wordsList = document.getElementById('wordsList');
-            wordsList.innerHTML = '';
-
-            WORDS.forEach(wordObj => {
-                const item = document.createElement('div');
-                item.className = 'word-item';
-                item.dataset.word = wordObj.word;
-
-                item.innerHTML = `
-                    <div class="word-item-text">${wordObj.word}</div>
-                    <div class="word-item-hint">${wordObj.hint}</div>
-                `;
-
-                item.addEventListener('click', () => {
-                    showDefinition(wordObj);
-                });
-
-                wordsList.appendChild(item);
-            });
-        }
-
-        // Mostrar definição
-        function showDefinition(wordObj) {
-            const definitionBox = document.getElementById('definitionBox');
-            definitionBox.innerHTML = `
-                <div class="definition-title">${wordObj.word}</div>
-                <div class="definition-text">${wordObj.definition}</div>
-                <div class="definition-extra">💡 ${wordObj.hint}</div>
-            `;
-        }
-
-        // Verificar conclusão do jogo
-        function checkCompletion() {
-            if (foundWords.size === WORDS.length) {
-                showCompletionMessage();
-            }
-        }
-
-        // Mostrar mensagem de conclusão
-        function showCompletionMessage() {
-            setTimeout(() => {
-                const overlay = document.createElement('div');
-                overlay.className = 'overlay';
-
-                const message = document.createElement('div');
-                message.className = 'completion-message';
-                message.innerHTML = `
-                    <h2>🎉 Parabéns! 🎉</h2>
-                    <p>Você encontrou todas as palavras e aprendeu sobre IA!</p>
-                    <button class="reset-btn" onclick="location.reload()">Jogar Novamente</button>
-                `;
-
-                document.body.appendChild(overlay);
-                document.body.appendChild(message);
-            }, 500);
-        }
-
-        // Mostrar mensagem temporária
-        function showMessage(text) {
-            // Implementar notificação se necessário
-            console.log(text);
-        }
-
-        // Botão "Limpar Seleção"
-        document.getElementById('clearBtn').addEventListener('click', clearSelection);
-
-        // Botão "Dica"
-        document.getElementById('hintBtn').addEventListener('click', () => {
-            const unfound = WORDS.filter(w => !foundWords.has(w.word));
-            
-            if (unfound.length === 0) {
-                alert('Você já encontrou todas as palavras!');
-                return;
-            }
-
-            const randomWord = unfound[Math.floor(Math.random() * unfound.length)];
-            
-            if (!usedHints.has(randomWord.word)) {
-                usedHints.add(randomWord.word);
-                alert(`💡 Dica: Procure por "${randomWord.word}"\n${randomWord.hint}`);
-            } else {
-                alert('Você já usou a dica para esta palavra. Tente procurar mais cuidadosamente!');
-            }
+    document
+        .querySelectorAll(".screen")
+        .forEach(screen=>{
+            screen.classList.remove("active");
         });
 
-        // Botão "Reiniciar Jogo"
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            foundWords.clear();
-            usedHints.clear();
-            selectedCells = [];
-            initGame();
-            document.getElementById('definitionBox').innerHTML = 
-                '<p>Clique em uma palavra da lista para ver sua definição e aprender mais sobre IA!</p>';
+    document
+        .getElementById(id)
+        .classList.add("active");
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =====================================================
+TOAST
+===================================================== */
+
+function toast(message){
+
+    const el =
+        document.getElementById("toast");
+
+    el.textContent = message;
+
+    el.classList.add("show");
+
+    setTimeout(()=>{
+
+        el.classList.remove("show");
+
+    },2500);
+
+}
+
+
+/* =====================================================
+PONTOS
+===================================================== */
+
+function addScore(value){
+
+    score += value;
+
+    document
+        .getElementById("score")
+        .textContent =
+        String(score).padStart(4,"0");
+
+}
+
+
+/* =====================================================
+BATERIA
+===================================================== */
+
+function spendBattery(value){
+
+    if(battery < value){
+
+        toast(
+            "SISTEMA: bateria insuficiente."
+        );
+
+        return false;
+
+    }
+
+    battery -= value;
+
+    document
+        .getElementById("batteryText")
+        .textContent =
+        battery+"%";
+
+    return true;
+
+}
+
+
+/* =====================================================
+ABRIR LOCAL
+===================================================== */
+
+function abrirLocal(local){
+
+    const data =
+        locations[local];
+
+    if(!spendBattery(5))
+        return;
+
+    document
+        .getElementById("localTitulo")
+        .textContent =
+        data.title;
+
+    document
+        .getElementById("localDescricao")
+        .textContent =
+        data.description;
+
+    document
+        .getElementById("localTerminal")
+        .textContent =
+        data.terminal;
+
+    const grid =
+        document.getElementById(
+            "evidenceGrid"
+        );
+
+    grid.innerHTML="";
+
+    data.objects.forEach(obj=>{
+
+        const div =
+            document.createElement("div");
+
+        const collected =
+            evidence.includes(obj.name);
+
+        div.className =
+            "evidence"+
+            (collected ? " found":"");
+
+        div.innerHTML = `
+
+            <div class="evidence-icon">
+                ${obj.icon}
+            </div>
+
+            <div class="evidence-code">
+                ${obj.code}
+            </div>
+
+            <h3>
+                ${obj.name}
+            </h3>
+
+            <p>
+                ${obj.text}
+            </p>
+
+            ${
+                collected
+                ?
+                `<button class="dark">
+                    [ JÁ COLETADA ]
+                 </button>`
+                :
+                `<button
+                    onclick="coletar(
+                        '${obj.name}',
+                        '${obj.suspect}',
+                        '${obj.code}'
+                    )">
+
+                    [ COLETAR ]
+
+                 </button>`
+            }
+
+        `;
+
+        grid.appendChild(div);
+
+    });
+
+    mudarTela("local");
+
+}
+
+
+/* =====================================================
+COLETAR
+===================================================== */
+
+function coletar(name,suspect,code){
+
+    if(evidence.includes(name)){
+
+        toast(
+            "Evidência já registrada."
+        );
+
+        return;
+
+    }
+
+    if(!spendBattery(8))
+        return;
+
+    evidence.push(name);
+
+    addScore(35);
+
+    chances[suspect] += 12;
+
+    normalize();
+
+    adicionarItem(name);
+
+    atualizarContador();
+
+    atualizarChances();
+
+    toast(
+        "EVIDÊNCIA "+code+
+        " adicionada ao arquivo."
+    );
+
+}
+
+
+/* =====================================================
+INVENTÁRIO
+===================================================== */
+
+function adicionarItem(name){
+
+    const boxes = [
+
+        document.getElementById(
+            "inventory"
+        ),
+
+        document.getElementById(
+            "boardItems"
+        )
+
+    ];
+
+    boxes.forEach(box=>{
+
+        if(!box)
+            return;
+
+        if(
+            box.querySelector(
+                `[data-name="${name}"]`
+            )
+        )
+            return;
+
+        const item =
+            document.createElement("div");
+
+        item.className="item";
+
+        item.textContent =
+            "▸ "+name;
+
+        item.draggable=true;
+
+        item.dataset.name=name;
+
+        item.addEventListener(
+            "dragstart",
+            event=>{
+
+                event.dataTransfer.setData(
+                    "text/plain",
+                    name
+                );
+
+            }
+        );
+
+        box.appendChild(item);
+
+    });
+
+}
+
+
+/* =====================================================
+CONTADOR
+===================================================== */
+
+function atualizarContador(){
+
+    document
+        .getElementById(
+            "evidenceCount"
+        )
+        .textContent =
+        evidence.length+"/10";
+
+}
+
+
+/* =====================================================
+NORMALIZAR CHANCES
+===================================================== */
+
+function normalize(){
+
+    Object.keys(chances)
+        .forEach(key=>{
+
+            if(chances[key]<1)
+                chances[key]=1;
+
         });
 
-        // Selecionar célula individual (para dispositivos móveis)
-        function selectCell(row, col) {
-            if (selectedCells.length === 0) {
-                selectedCells = [[row, col]];
-            } else {
-                const lastCell = selectedCells[selectedCells.length - 1];
-                if (isAdjacent(lastCell, [row, col])) {
-                    selectedCells.push([row, col]);
-                }
-            }
-            updateSelectedDisplay();
-        }
+    const total =
+        Object.values(chances)
+        .reduce(
+            (a,b)=>a+b,
+            0
+        );
 
-        // Iniciar jogo ao carregar a página
-        document.addEventListener('DOMContentLoaded', initGame);
+    Object.keys(chances)
+        .forEach(key=>{
 
-        // Prevenir comportamento padrão de seleção de texto
-        document.addEventListener('selectstart', (e) => {
-            if (e.target.classList.contains('letter-cell')) {
-                e.preventDefault();
-            }
+            chances[key] =
+                Math.round(
+                    chances[key]/total*100
+                );
+
         });
-    </script>
+
+    const total2 =
+        Object.values(chances)
+        .reduce(
+            (a,b)=>a+b,
+            0
+        );
+
+    chances.mingau +=
+        100-total2;
+
+}
+
+
+/* =====================================================
+ATUALIZAR CHANCES
+===================================================== */
+
+function atualizarChances(){
+
+    Object.keys(chances)
+        .forEach(id=>{
+
+            const text =
+                document.getElementById(
+                    "chance-"+id
+                );
+
+            const bar =
+                document.getElementById(
+                    "bar-"+id
+                );
+
+            if(text)
+                text.textContent =
+                chances[id]+"%";
+
+            if(bar)
+                bar.style.width =
+                chances[id]+"%";
+
+        });
+
+}
+
+
+/* =====================================================
+SELECIONAR SUSPEITO
+===================================================== */
+
+function selecionar(id){
+
+    selected=id;
+
+    document
+        .querySelectorAll(".suspect")
+        .forEach(el=>{
+            el.classList.remove(
+                "selected"
+            );
+        });
+
+    document
+        .getElementById(
+            "suspect-"+id
+        )
+        .classList.add("selected");
+
+    const reasons={
+
+        lucas:
+        "O registro do computador confirma atividade às 07:32, mas o tênis tamanho 40 cria uma possível ligação com a cena.",
+
+        regina:
+        "O bilhete relacionado à dieta cria uma possível motivação, porém ainda não confirma sua presença na cozinha.",
+
+        mingau:
+        "Pelos, marcas de patas, migalhas e a gravação de segurança podem formar uma cadeia de evidências consistente.",
+
+        jorge:
+        "Terra vermelha e botas com farinha conectam Jorge à área externa e podem explicar resíduos encontrados."
+
+    };
+
+    document
+        .getElementById(
+            "suspectAnalysis"
+        )
+        .textContent =
+        "> ALVO: "+
+        names[id]+
+        "\n\n"+
+        "> PROBABILIDADE ATUAL: "+
+        chances[id]+"%\n\n"+
+        "> ANÁLISE:\n"+
+        reasons[id];
+
+}
+
+
+/* =====================================================
+DRAG LAB
+===================================================== */
+
+const drop =
+    document.getElementById("drop");
+
+drop.addEventListener(
+    "dragover",
+    event=>{
+
+        event.preventDefault();
+
+        drop.classList.add(
+            "dragover"
+        );
+
+    }
+);
+
+drop.addEventListener(
+    "dragleave",
+    ()=>{
+
+        drop.classList.remove(
+            "dragover"
+        );
+
+    }
+);
+
+drop.addEventListener(
+    "drop",
+    event=>{
+
+        event.preventDefault();
+
+        drop.classList.remove(
+            "dragover"
+        );
+
+        const item =
+            event.dataTransfer.getData(
+                "text/plain"
+            );
+
+        analisar(item);
+
+    }
+);
+
+
+/* =====================================================
+LABORATÓRIO
+===================================================== */
+
+function analisar(item){
+
+    if(!item)
+        return;
+
+    if(!spendBattery(4))
+        return;
+
+    let result="";
+
+    if(
+        item.includes("Pelo")
+    ){
+
+        result=
+        "> AMOSTRA: "+
+        item+
+        "\n\n"+
+        "> ANÁLISE GENÉTICA CONCLUÍDA.\n"+
+        "> ORIGEM: FELINO.\n"+
+        "> COMPATIBILIDADE: MINGAU.\n"+
+        "> CONFIANÇA: ALTA.";
+
+        chances.mingau += 20;
+
+        addScore(70);
+
+    }
+
+    else if(
+        item.includes("Migalha")
+    ){
+
+        result=
+        "> AMOSTRA: "+
+        item+
+        "\n\n"+
+        "> RESÍDUO DE PÃO IDENTIFICADO.\n"+
+        "> MESMA COMPOSIÇÃO DA CENA.\n"+
+        "> POSSÍVEL TRANSPORTE POR ANIMAL.";
+
+        chances.mingau += 10;
+
+        addScore(40);
+
+    }
+
+    else if(
+        item.includes("Bilhete")
+    ){
+
+        result=
+        "> DOCUMENTO RECUPERADO.\n\n"+
+        "> CALIGRAFIA HUMANA.\n"+
+        "> CONTEÚDO RELACIONADO A DIETA.\n"+
+        "> POSSÍVEL RELAÇÃO: REGINA.";
+
+        chances.regina += 15;
+
+        addScore(45);
+
+    }
+
+    else if(
+        item.includes("Terra")
+    ){
+
+        result=
+        "> MATERIAL MINERAL ANALISADO.\n\n"+
+        "> COMPOSIÇÃO COMPATÍVEL COM O JARDIM.\n"+
+        "> RELAÇÃO POSSÍVEL: JORGE.";
+
+        chances.jorge += 15;
+
+        addScore(45);
+
+    }
+
+    else if(
+        item.includes("Tênis")
+    ){
+
+        result=
+        "> OBJETO ANALISADO.\n\n"+
+        "> TAMANHO: 40.\n"+
+        "> COMPATIBILIDADE COM PEGADA: MODERADA.\n"+
+        "> SUSPEITO ASSOCIADO: LUCAS.";
+
+        chances.lucas += 15;
+
+        addScore(45);
+
+    }
+
+    else if(
+        item.includes("Gravação")
+    ){
+
+        result=
+        "> ARQUIVO RECUPERADO.\n\n"+
+        "> HORÁRIO: 07:57.\n"+
+        "> MOVIMENTO DETECTADO NA COZINHA.\n"+
+        "> SILHUETA PEQUENA.\n"+
+        "> PADRÃO DE MOVIMENTO: ANIMAL.\n\n"+
+        "> CONCLUSÃO: EVIDÊNCIA CRÍTICA.";
+
+        chances.mingau += 30;
+
+        addScore(120);
+
+    }
+
+    else{
+
+        result=
+        "> ANÁLISE INCONCLUSIVA.\n"+
+        "> MAIS EVIDÊNCIAS NECESSÁRIAS.";
+
+    }
+
+    normalize();
+
+    atualizarChances();
+
+    document
+        .getElementById(
+            "labResult"
+        )
+        .textContent =
+        result;
+
+}
+
+
+/* =====================================================
+INTERROGATÓRIO
+===================================================== */
+
+function pergunta(id,index){
+
+    const answers={
+
+        lucas:[
+
+            "Eu estava no quarto. O computador estava ligado.",
+
+            "Estava jogando. Não saí do quarto naquele período."
+
+        ],
+
+        regina:[
+
+            "Passei pela cozinha, mas não toquei no pão.",
+
+            "Sim. O bilhete é meu, mas isso não significa que eu peguei o pão."
+
+        ],
+
+        mingau:[
+
+            "*Mingau olha para o investigador.*\n\nMIAU.",
+
+            "*Mingau lambe os bigodes e se afasta lentamente.*"
+
+        ],
+
+        jorge:[
+
+            "Eu estava cuidando das plantas no jardim.",
+
+            "Farinha nas botas? Pode ter sido de outro momento."
+
+        ]
+
+    };
+
+    interrogated[id]=true;
+
+    addScore(20);
+
+    document
+        .getElementById("answer")
+        .innerHTML = `
+
+            <div class="answer-header">
+
+                INTERROGATÓRIO //
+                ${names[id].toUpperCase()}
+
+            </div>
+
+            <p style="
+                color:#9eeeb8;
+                font-family:monospace;
+                white-space:pre-line;
+            ">
+
+                ${answers[id][index]}
+
+            </p>
+
+            <br>
+
+            &gt; Declaração registrada.
+
+        `;
+
+}
+
+
+/* =====================================================
+TIMELINE
+===================================================== */
+
+function dragPessoa(event,nome){
+
+    event.dataTransfer.setData(
+        "pessoa",
+        nome
+    );
+
+}
+
+
+function allowDrop(event){
+
+    event.preventDefault();
+
+}
+
+
+function dropTempo(event,horario){
+
+    event.preventDefault();
+
+    const nome =
+        event.dataTransfer.getData(
+            "pessoa"
+        );
+
+    if(!nome)
+        return;
+
+    const id =
+        "t"+
+        horario.replace(":","");
+
+    document
+        .getElementById(id)
+        .textContent =
+        nome;
+
+    addScore(10);
+
+    let message=
+        "> MOVIMENTO REGISTRADO: "+
+        nome+
+        " às "+
+        horario;
+
+    if(
+        nome==="Mingau" &&
+        horario==="08:00"
+    ){
+
+        message +=
+        "\n> COMPATÍVEL COM EVIDÊNCIAS DA CENA.\n"+
+        "> CORRELAÇÃO ALTA.";
+
+        chances.mingau += 15;
+
+        normalize();
+
+        atualizarChances();
+
+        addScore(60);
+
+    }
+
+    document
+        .getElementById(
+            "timelineResult"
+        )
+        .textContent =
+        message;
+
+}
+
+
+/* =====================================================
+QUADRO
+===================================================== */
+
+function connect(event,suspeito){
+
+    event.preventDefault();
+
+    const item =
+        event.dataTransfer.getData(
+            "text/plain"
+        );
+
+    if(!item)
+        return;
+
+    const box =
+        document.getElementById(
+            "board-"+suspeito
+        );
+
+    const line =
+        document.createElement("div");
+
+    line.style.cssText =
+        "padding:8px 0;color:#9eeeb8;font-family:monospace;";
+
+    line.textContent =
+        "▸ "+item;
+
+    box.appendChild(line);
+
+    let correct=false;
+
+    if(
+        item.includes("Pelo") &&
+        suspeito==="mingau"
+    )
+        correct=true;
+
+    if(
+        item.includes("Migalha") &&
+        suspeito==="mingau"
+    )
+        correct=true;
+
+    if(
+        item.includes("Patas") &&
+        suspeito==="mingau"
+    )
+        correct=true;
+
+    if(
+        item.includes("Gravação") &&
+        suspeito==="mingau"
+    )
+        correct=true;
+
+    if(
+        item.includes("Bilhete") &&
+        suspeito==="regina"
+    )
+        correct=true;
+
+    if(
+        item.includes("Tênis") &&
+        suspeito==="lucas"
+    )
+        correct=true;
+
+    if(
+        item.includes("Terra") &&
+        suspeito==="jorge"
+    )
+        correct=true;
+
+    if(correct){
+
+        addScore(50);
+
+        chances[suspeito]+=8;
+
+        normalize();
+
+        atualizarChances();
+
+        document
+            .getElementById(
+                "connectionResult"
+            )
+            .textContent =
+            "> CONEXÃO CONFIRMADA.\n"+
+            "> EVIDÊNCIA COMPATÍVEL COM "+
+            names[suspeito].toUpperCase()+
+            ".\n"+
+            "> PONTUAÇÃO ADICIONADA.";
+
+    }
+
+    else{
+
+        document
+            .getElementById(
+                "connectionResult"
+            )
+            .textContent =
+            "> CONEXÃO FRACA.\n"+
+            "> RELAÇÃO NÃO CONFIRMADA.\n"+
+            "> CONTINUE INVESTIGANDO.";
+
+    }
+
+}
+
+
+/* =====================================================
+ACUSAÇÃO
+===================================================== */
+
+function irAcusacao(){
+
+    if(!selected){
+
+        toast(
+            "Selecione um suspeito primeiro."
+        );
+
+        return;
+
+    }
+
+    document
+        .getElementById(
+            "target"
+        )
+        .textContent =
+        names[selected]
+        .toUpperCase();
+
+    mudarTela("acusacao");
+
+}
+
+
+/* =====================================================
+FINAL
+===================================================== */
+
+function finalizar(){
+
+    if(!selected)
+        return;
+
+    mudarTela("final");
+
+    let bonus=0;
+
+    if(evidence.length>=8)
+        bonus+=200;
+
+    if(
+        Object.keys(interrogated)
+        .length===4
+    )
+        bonus+=150;
+
+    score+=bonus;
+
+    document
+        .getElementById(
+            "finalScore"
+        )
+        .textContent =
+        String(score).padStart(4,"0");
+
+    if(
+        selected==="mingau"
+    ){
+
+        document
+            .getElementById(
+                "finalIcon"
+            )
+            .textContent =
+            "✓";
+
+        document
+            .getElementById(
+                "finalIcon"
+            )
+            .style.color =
+            "var(--green)";
+
+        document
+            .getElementById(
+                "finalTitle"
+            )
+            .textContent =
+            "CASO RESOLVIDO";
+
+        document
+            .getElementById(
+                "finalText"
+            )
+            .textContent =
+            "A investigação apontou corretamente para Mingau. As evidências físicas e a gravação de segurança formaram a principal cadeia de prova.";
+
+        document
+            .getElementById(
+                "finalReport"
+            )
+            .textContent =
+            "> STATUS: RESOLVIDO\n"+
+            "> SUSPEITO: MINGAU\n"+
+            "> EVIDÊNCIAS COLETADAS: "+
+            evidence.length+
+            "/10\n"+
+            "> INVESTIGAÇÃO ENCERRADA\n"+
+            "> CLASSIFICAÇÃO: DETETIVE";
+
+    }
+
+    else{
+
+        document
+            .getElementById(
+                "finalIcon"
+            )
+            .textContent =
+            "X";
+
+        document
+            .getElementById(
+                "finalIcon"
+            )
+            .style.color =
+            "var(--red)";
+
+        document
+            .getElementById(
+                "finalTitle"
+            )
+            .textContent =
+            "ACUSAÇÃO INCORRETA";
+
+        document
+            .getElementById(
+                "finalText"
+            )
+            .textContent =
+            "A acusação não correspondeu às principais evidências encontradas durante a investigação.";
+
+        document
+            .getElementById(
+                "finalReport"
+            )
+            .textContent =
+            "> STATUS: FALHA\n"+
+            "> SUSPEITO ACUSADO: "+
+            names[selected].toUpperCase()+
+            "\n"+
+            "> CULPADO REAL: MINGAU\n"+
+            "> EVIDÊNCIAS COLETADAS: "+
+            evidence.length+
+            "/10\n"+
+            "> CASO REABERTO.";
+
+    }
+
+}
+
+
+/* =====================================================
+INICIALIZAÇÃO
+===================================================== */
+
+atualizarChances();
+
+atualizarContador();
+
+</script>
+
 </body>
 </html>
